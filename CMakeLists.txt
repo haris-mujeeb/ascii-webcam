@@ -42,24 +42,48 @@ else()
   message(STATUS "OpenCV found at ${OpenCV_INCLUDE_DIRS}")
 endif()
 
+# Define the ascii_webcam_lib library
+add_library(ascii_webcam_lib STATIC
+  src/ascii_image.cpp
+  src/raw_image.cpp
+)
+
+target_include_directories(ascii_webcam_lib PUBLIC
+  "${CMAKE_CURRENT_SOURCE_DIR}/include"
+  "${CMAKE_CURRENT_SOURCE_DIR}/third_party"
+)
+
+target_link_libraries(ascii_webcam_lib PUBLIC
+  opencv_core
+  opencv_highgui
+  opencv_imgcodecs
+  opencv_videoio
+)
+
+# Define the main application executable
+add_executable(ascii_webcam_app src/main.cpp)
+
+target_link_libraries(ascii_webcam_app PRIVATE
+  ascii_webcam_lib
+)
+
+# Define the test executable
 add_executable(ascii_art_test tests/ascii_art_tests.cpp)
 
 target_compile_definitions(ascii_art_test PRIVATE IMAGE_FILE_PATH=${CMAKE_CURRENT_SOURCE_DIR}/images/light.png)
 target_compile_definitions(ascii_art_test PRIVATE OUTPUT_GRAY_TXT_FILE_PATH=${CMAKE_CURRENT_SOURCE_DIR}/output/output_gray.txt)
 target_compile_definitions(ascii_art_test PRIVATE OUTPUT_COLORED_TXT_FILE_PATH=${CMAKE_CURRENT_SOURCE_DIR}/output/output_colored.txt)
 
-target_link_libraries(ascii_art_test 
-  PRIVATE 
-    GTest::gtest_main 
-    opencv_core opencv_highgui opencv_imgcodecs opencv_videoio 
-  )  # Link OpenCV libraries
-
-target_include_directories(ascii_art_test PRIVATE
-
-  "${CMAKE_CURRENT_SOURCE_DIR}/src"
-
+# Update the ascii_art_test target
+target_link_libraries(ascii_art_test
+  PRIVATE
+    GTest::gtest_main
+    ascii_webcam_lib
 )
 
-
+target_include_directories(ascii_art_test PRIVATE
+  "${CMAKE_CURRENT_SOURCE_DIR}/include"
+  "${CMAKE_CURRENT_SOURCE_DIR}/third_party"
+)
 
 gtest_add_tests(TARGET ascii_art_test)

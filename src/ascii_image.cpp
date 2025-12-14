@@ -1,16 +1,8 @@
-#ifndef ASCII_IMAGE_HPP
-#define ASCII_IMAGE_HPP
-
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <cmath>
-#include <cstring>
-#include "raw_image.hpp"
-#include <opencv2/opencv.hpp>
-
+#include "ascii_image.hpp"
+#include <cstring> // For strlen
 
 const char* ASCII_CHARS = " .`,:\"^`_-\'!Ii><~+*jftrxunvczXYUJCLQ0OZmwdbqkhao*#MW&8B%@$";
+
 
 int getGrayscaleValue(uint8_t r, uint8_t g, uint8_t b) {
   return static_cast<int>(0.299 * r + 0.587 * g + 0.114 * b);
@@ -56,7 +48,7 @@ void getRainbowColor(int width, int height, int scroll_offset,
   blue = static_cast<uint8_t>(std::sin(freq * i + 4) * 127 + 128);
 }
 
-RawImage convertToRainbowAscii(const RawImage& img, int scroll_offset = 0) {
+RawImage convertToRainbowAscii(const RawImage& img, int scroll_offset) { // Removed default arg
   int width = img.getWidth();
   int height = img.getHeight();
   uint8_t* data = img.getData();
@@ -138,7 +130,7 @@ RawImage convertToColoredAscii(const RawImage &source_image) {
   return target;
 }
 
-void ouputAsciiToFile(const RawImage &img, const char* output_filename) {
+void outputAsciiToFile(const RawImage &img, const char* output_filename) {
   std::ofstream outputFile(output_filename, std::ios::trunc) ;
   
   if (!outputFile) {
@@ -156,6 +148,7 @@ void ouputAsciiToFile(const RawImage &img, const char* output_filename) {
 
 
 void outputWebcameAsciiStream(size_t FRAMES_TO_PROCESS) {
+  
   cv::VideoCapture cap(0);
   if (!cap.isOpened()) {
     throw std::runtime_error("Error: Could not open webcame.");
@@ -163,7 +156,12 @@ void outputWebcameAsciiStream(size_t FRAMES_TO_PROCESS) {
   
   cv::Mat frame, resized_frame;
 
+  // calculating average frame rate
+  unsigned int current_fps = 0, avg_fps = 0; 
+  
   for (int i = 0; i < FRAMES_TO_PROCESS; i++){
+    auto start = std::chrono::high_resolution_clock::now();  
+
     cap >> frame;
     if (frame.empty()) {
       throw std::runtime_error("Error: No frame captured from the webcam.");
@@ -183,7 +181,19 @@ void outputWebcameAsciiStream(size_t FRAMES_TO_PROCESS) {
     
     std::cout << "\033[H\033[J";  // ANSI escape code to clear screen
     std::cout << "\033[H" << convertToColoredAscii(img).getData() << std::flush;
+
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double, std::milli> elapsed = end - start;
+
+    current_fps = static_cast<int>(1000 / elapsed.count());
+    std::string fps_str = std::to_string(current_fps);
+    
+    std::cout << "Frame Rate: " <<  fps_str << std::endl;
+    avg_fps += current_fps;
   }
-}
   
-#endif // ASCII_IMAGE_HPP
+  avg_fps /= FRAMES_TO_PROCESS;
+  
+  std::string avg_fps_str = std::to_string(avg_fps);
+  std::cout << "Avg. Frame Rate: " <<  avg_fps_str << std::endl;
+}
