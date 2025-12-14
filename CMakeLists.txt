@@ -9,16 +9,30 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Debug)
 endif()
 
+# Set output directory for executables
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
+# MSVC-specific settings
+if(MSVC)
+  add_compile_options(/W4 /WX)
+endif()
+
 include(FetchContent)
 
 # --- Google Test ---
-FetchContent_Declare(
-  googletest
-  URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
-  DOWNLOAD_EXTRACT_TIMESTAMP true
-)
+find_package(GTest QUIET)
+if(NOT GTest_FOUND)
+  message(STATUS "GTest not found, fetching from source...")
+  FetchContent_Declare(
+    googletest
+    URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
+    DOWNLOAD_EXTRACT_TIMESTAMP true
+  )
+  FetchContent_MakeAvailable(googletest)
+else()
+  message(STATUS "GTest found at ${GTEST_INCLUDE_DIRS}")
+endif()
 
-FetchContent_MakeAvailable(googletest)
 enable_testing()
 include(GoogleTest)
 

@@ -1,6 +1,7 @@
 # Compiled Object files
 *.o
 *.obj
+*.objd
 
 # Compiled Dynamic libraries
 *.dll
@@ -14,6 +15,7 @@
 # Executables
 *.exe
 *.out
+*.app
 
 # Build directories
 build/
@@ -21,36 +23,49 @@ bin/
 out/
 debug/
 release/
+x64/
+x86/
 
 # VS Code files
-.vscode/*.log
-.vscode/*.bak
-.vscode/.easycpp
-.vscode/*.code-workspace
-.vscode/*browse.vc.*
+.vscode/
+
+# Visual Studio files
+*.sln
+*.suo
+*.user
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+**/ipch/
+.vs/
 
 # CMake files
 CMakeCache.txt
 CMakeFiles/
 CMakeLists.txt.user
+cmake_install.cmake
+install_manifest.txt
 
 # Temporary files
 *.log
 *.tmp
+*.temp
 
 # OS generated files
 .DS_Store
 Thumbs.db
 
-# Other files
+# Other IDE files
 .idea/
 *.user
 *.sublime-project
 *.sublime-workspace
+*.creator
+*.creator.user
+*.creator.user.*
 
-# Ignore offline book
-./book/
-.vscode/browse.vc.db
-.vscode/browse.vc.db-shm
-.vscode/browse.vc.db
-.vscode/browse.vc.db-shm
+# Other
+*~
+*.swp
+*.swo
+.clang-format

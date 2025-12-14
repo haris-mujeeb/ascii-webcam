@@ -6,23 +6,26 @@
 #include <thread> // For std::this_thread::sleep_for
 #include <iomanip> // For std::setprecision
 
-const char* ASCII_CHARS = " .`,:\"^`_-\'!Ii><~+*jftrxunvczXYUJCLQ0OZmwdbqkhao*#MW&8B%@$";
 
-// Precompile the ASCII mapping table to avoid calculations
+// Precompile tables to avoid calculations
+const char* ASCII_CHARS = " .`,:\"^`_-\'!Ii><~+*jftrxunvczXYUJCLQ0OZmwdbqkhao*#MW&8B%@$";
+const int ASCII_TABLE_SIZE = 256;
+
 struct AsciiTable
 {
-  char data[256];
+  char data[ASCII_TABLE_SIZE];
   AsciiTable() {
     int len = std::strlen(ASCII_CHARS) - 1;
-    for (int i = 0; i < 256; ++i) {
-      data[i] = ASCII_CHARS[ (i * len) / 255];
+    for (int i = 0; i < ASCII_TABLE_SIZE; ++i) {
+      data[i] = ASCII_CHARS[ (i * len) / (ASCII_TABLE_SIZE -1)];
     }
   }
 };
 static const AsciiTable ASCII_LUT;
 
-
 static const size_t ASCII_CHARS_LEN = strlen(ASCII_CHARS);
+
+
 
 int getGrayscaleValue(uint8_t r, uint8_t g, uint8_t b) {
   return (299 * static_cast<int>(r) + 587 * static_cast<int>(g) + 114 * static_cast<int>(b)) / 1000;
