@@ -82,6 +82,7 @@ RawImage& RawImage::operator= (RawImage &&other) noexcept {
   if (this != &other) {
   
     delete[] m_data;    // Delete current resources
+    s_live_objects--;
   
     // Transfer ownership from 'other'
   
@@ -108,8 +109,6 @@ RawImage& RawImage::operator= (RawImage &&other) noexcept {
     other.m_height = 0;
   
     other.m_channels = 0;
-  
-    // No change to s_live_objects for 'other' as its resources are moved, not destroyed.
   
   }
   

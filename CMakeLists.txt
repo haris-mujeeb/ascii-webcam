@@ -121,4 +121,5 @@ target_include_directories(raw_image_test PRIVATE
 "${CMAKE_CURRENT_SOURCE_DIR}/third_party"
 )
 
-gtest_add_tests(TARGET ascii_image_test raw_image_test)
+gtest_discover_tests(ascii_image_test)
+gtest_discover_tests(raw_image_test)
