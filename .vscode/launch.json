@@ -8,7 +8,7 @@
             "name": "Debug ascii_art_test",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/ascii_art_test",
+            "program": "${workspaceFolder}/build/ascii_image_test",
             "preLaunchTask": "Build Project",
             "args": [],
             "stopAtEntry": true,

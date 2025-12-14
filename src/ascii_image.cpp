@@ -39,7 +39,7 @@ RawImage convertToAscii(const RawImage &source_image) {
   int height = source_image.getHeight();
   int channels = 1; // For 1 grayscaled ascii code per pixel
   int size = source_image.getSize();
-  uint8_t* source_data = source_image.getData();
+  const uint8_t* source_data = source_image.getData();
   
   RawImage target_image(width + height, height, 1); // 1 extra row for '\n'
   uint8_t* target_data = target_image.getData();
@@ -69,14 +69,11 @@ void getRainbowColor(int width, int height, int scroll_offset,
   blue = static_cast<uint8_t>(std::sin(freq * i + 4) * 127 + 128);
 }
 
-RawImage convertToRainbowAscii(const RawImage& img, int scroll_offset) { // Removed default arg
+void convertToRainbowAscii(const RawImage& img, int scroll_offset, RawImage& target) {
   int width = img.getWidth();
   int height = img.getHeight();
-  uint8_t* data = img.getData();
+  const uint8_t* data = img.getData();
   
-  // Estimate size: max 19 bytes per pixel (\033[38;2;255;255;255mC) + newline + footer + null
-  size_t estimated_size = height * (width * 20 + 1) + 16;
-  RawImage target(estimated_size, 1, 1);
   char* buffer = reinterpret_cast<char*>(target.getData());
   char* p = buffer;
 
@@ -100,17 +97,13 @@ RawImage convertToRainbowAscii(const RawImage& img, int scroll_offset) { // Remo
   // Reset color at end
   sprintf(p, "\033[0m");
 
-  return target;
 }
 
-RawImage convertToColoredAscii(const RawImage &source_image) {
+void convertToColoredAscii(const RawImage &source_image, RawImage& target) {
   int width = source_image.getWidth();
   int height = source_image.getHeight();
-  uint8_t* data = source_image.getData();
+  const uint8_t* data = source_image.getData();
   
-  // Estimate size: max 19 bytes per pixel (\033[38;2;255;255;255mC) + newline + footer + null
-  size_t estimated_size = height * (width * 20 + 1) + 16;
-  RawImage target(estimated_size, 1, 1);
   char* buffer = reinterpret_cast<char*>(target.getData());
   char* p = buffer;
 
@@ -131,8 +124,6 @@ RawImage convertToColoredAscii(const RawImage &source_image) {
   }
   // Reset color at end
   sprintf(p, "\033[0m");
-
-  return target;
 }
 
 void outputAsciiToFile(const RawImage &img, const char* output_filename) {
@@ -161,6 +152,16 @@ void outputWebcameAsciiStream(size_t FRAMES_TO_PROCESS) {
   
   cv::Mat frame, resized_frame;
 
+  // Disable synchronization with C-style I/O for faster terminal output
+  std::ios::sync_with_stdio(false);
+  std::cin.tie(NULL);
+
+  // Estimate size: max 19 bytes per pixel (\033[38;2;255;255;255mC) + newline + footer + null
+  int initial_width = 100; // Assuming this as max width
+  int initial_height = 100 * 0.55; // Assuming this as max height with aspect ratio
+  size_t estimated_size = initial_height * (initial_width * 20 + 1) + 16;
+  RawImage buffer_image(estimated_size, 1, 1);
+
   // calculating average frame rate
   unsigned int current_fps = 0, avg_fps = 0; 
   
@@ -184,8 +185,9 @@ void outputWebcameAsciiStream(size_t FRAMES_TO_PROCESS) {
     // Create RawImage from the resized OpenCV matrix data
     RawImage img(resized_frame.cols, resized_frame.rows, resized_frame.channels(), resized_frame.data);
     
-    std::cout << "\033[H\033[J";  // ANSI escape code to clear screen
-    std::cout << "\033[H" << convertToColoredAscii(img).getData() << std::flush;
+    std::cout << "\033[H\033[2J";  // ANSI escape code to clear screen and move cursor home
+    convertToColoredAscii(img, buffer_image);
+    std::cout << buffer_image.getData() << std::flush;
 
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double, std::milli> elapsed = end - start;
@@ -205,18 +207,30 @@ void outputWebcameAsciiStream(size_t FRAMES_TO_PROCESS) {
 
 
 void outputRainbowAsciiAnimation(const RawImage& img, size_t FRAMES_TO_PROCESS) {
-  // // Disable synchronization with C-style I/O for faster terminal output
-  // std::ios::sync_with_stdio(false);
-  // std::cin.tie(NULL);
+  // Disable synchronization with C-style I/O for faster terminal output
+  std::ios::sync_with_stdio(false);
+  std::cin.tie(NULL);
   
+  // Create the RawImage object once
+
+  // Estimate size: max 19 bytes per pixel (\033[38;2;255;255;255mC) + newline + footer + null
+  int width = img.getWidth();
+  int height = img.getHeight();
+  size_t estimated_size = height * (width * 20 + 1) + 16;
+
+  RawImage buffer_image(estimated_size, 1, 1);
+
   // calculating average frame rate
   unsigned int current_fps = 0, avg_fps = 0; 
   
   for (int i = 0; i < FRAMES_TO_PROCESS; i++){
     auto start = std::chrono::high_resolution_clock::now();
 
-    std::cout << "\033[H\033[J";  // ANSI escape code to clear screen
-    std::cout << "\033[H" << convertToRainbowAscii(img, i).getData() << std::flush;
+    std::cout << "\033[H\033[2J";  // ANSI escape code to clear screen and move cursor home
+    
+    convertToRainbowAscii(img, i, buffer_image);
+
+    std::cout << buffer_image.getData() << std::flush;
 
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double, std::milli> elapsed = end - start;

@@ -20,11 +20,14 @@ public:
   
   RawImage(const RawImage &other); // Copy constructor
   RawImage& operator= (const RawImage &other); // Copy assignement
+  RawImage(RawImage &&other) noexcept; // Move constructor
+  RawImage& operator= (RawImage &&other) noexcept; // Move assignement
   size_t getSize() const { return m_size; }
   int getWidth() const { return m_width; }
   int getHeight() const { return m_height;}
   int getChannels() const { return m_channels;}
-  uint8_t* getData() const { return m_data; }
+  uint8_t* getData() { return m_data; }
+  const uint8_t* getData() const { return m_data; }
   static int get_live_count() { return s_live_objects; }
 };
 

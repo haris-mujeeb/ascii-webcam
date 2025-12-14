@@ -68,22 +68,43 @@ target_link_libraries(ascii_webcam_app PRIVATE
 )
 
 # Define the test executable
-add_executable(ascii_art_test tests/ascii_art_tests.cpp)
+add_executable(ascii_image_test tests/ascii_image_tests.cpp)
 
-target_compile_definitions(ascii_art_test PRIVATE IMAGE_FILE_PATH=${CMAKE_CURRENT_SOURCE_DIR}/images/light.png)
-target_compile_definitions(ascii_art_test PRIVATE OUTPUT_GRAY_TXT_FILE_PATH=${CMAKE_CURRENT_SOURCE_DIR}/output/output_gray.txt)
-target_compile_definitions(ascii_art_test PRIVATE OUTPUT_COLORED_TXT_FILE_PATH=${CMAKE_CURRENT_SOURCE_DIR}/output/output_colored.txt)
+target_compile_definitions(ascii_image_test PRIVATE IMAGE_FILE_PATH=${CMAKE_CURRENT_SOURCE_DIR}/images/light.png)
+target_compile_definitions(ascii_image_test PRIVATE OUTPUT_GRAY_TXT_FILE_PATH=${CMAKE_CURRENT_SOURCE_DIR}/output/output_gray.txt)
+target_compile_definitions(ascii_image_test PRIVATE OUTPUT_COLORED_TXT_FILE_PATH=${CMAKE_CURRENT_SOURCE_DIR}/output/output_colored.txt)
 
 # Update the ascii_art_test target
-target_link_libraries(ascii_art_test
-  PRIVATE
-    GTest::gtest_main
-    ascii_webcam_lib
+target_link_libraries(ascii_image_test
+PRIVATE
+GTest::gtest_main
+ascii_webcam_lib
 )
 
-target_include_directories(ascii_art_test PRIVATE
-  "${CMAKE_CURRENT_SOURCE_DIR}/include"
-  "${CMAKE_CURRENT_SOURCE_DIR}/third_party"
+target_include_directories(ascii_image_test PRIVATE
+"${CMAKE_CURRENT_SOURCE_DIR}/include"
+"${CMAKE_CURRENT_SOURCE_DIR}/third_party"
 )
 
-gtest_add_tests(TARGET ascii_art_test)
+
+# Define the test executable
+add_executable(raw_image_test tests/raw_image_tests.cpp)
+
+target_compile_definitions(raw_image_test PRIVATE IMAGE_FILE_PATH=${CMAKE_CURRENT_SOURCE_DIR}/images/light.png)
+target_compile_definitions(raw_image_test PRIVATE OUTPUT_GRAY_TXT_FILE_PATH=${CMAKE_CURRENT_SOURCE_DIR}/output/output_gray.txt)
+target_compile_definitions(raw_image_test PRIVATE OUTPUT_COLORED_TXT_FILE_PATH=${CMAKE_CURRENT_SOURCE_DIR}/output/output_colored.txt)
+
+
+# Update the ascii_art_test target
+target_link_libraries(raw_image_test
+PRIVATE
+GTest::gtest_main
+ascii_webcam_lib
+)
+
+target_include_directories(raw_image_test PRIVATE
+"${CMAKE_CURRENT_SOURCE_DIR}/include"
+"${CMAKE_CURRENT_SOURCE_DIR}/third_party"
+)
+
+gtest_add_tests(TARGET ascii_image_test raw_image_test)
