@@ -23,7 +23,10 @@ This project is a simple C++ application that captures video from a webcam, conv
 
 Here is a quick demo of the application in action:
 
-![Animation](https://github.com/haris-22/ascii-webcam/assets/56654924/25291583-b883-4893-86a0-4ff667107779)
+
+https://github.com/user-attachments/assets/f9446e81-4adb-40a0-94f2-ed6b91516493
+
+
 
 ## Dependencies
 
