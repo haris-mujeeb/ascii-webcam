@@ -28,6 +28,7 @@ if(NOT GTest_FOUND)
     URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
     DOWNLOAD_EXTRACT_TIMESTAMP true
   )
+  set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
   FetchContent_MakeAvailable(googletest)
 else()
   message(STATUS "GTest found at ${GTEST_INCLUDE_DIRS}")
