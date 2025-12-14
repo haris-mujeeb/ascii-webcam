@@ -1,16 +1,37 @@
 #include "ascii_image.hpp"
-#include <cstring> // For strlen
+#include <stdexcept>
+#include <cstdio>   // For sprintf
+#include <string> // For std::string, std::to_string
+#include <chrono> // For std::chrono
+#include <thread> // For std::this_thread::sleep_for
+#include <iomanip> // For std::setprecision
 
 const char* ASCII_CHARS = " .`,:\"^`_-\'!Ii><~+*jftrxunvczXYUJCLQ0OZmwdbqkhao*#MW&8B%@$";
 
+// Precompile the ASCII mapping table to avoid calculations
+struct AsciiTable
+{
+  char data[256];
+  AsciiTable() {
+    int len = std::strlen(ASCII_CHARS) - 1;
+    for (int i = 0; i < 256; ++i) {
+      data[i] = ASCII_CHARS[ (i * len) / 255];
+    }
+  }
+};
+static const AsciiTable ASCII_LUT;
+
+
+static const size_t ASCII_CHARS_LEN = strlen(ASCII_CHARS);
 
 int getGrayscaleValue(uint8_t r, uint8_t g, uint8_t b) {
-  return static_cast<int>(0.299 * r + 0.587 * g + 0.114 * b);
+  return (299 * static_cast<int>(r) + 587 * static_cast<int>(g) + 114 * static_cast<int>(b)) / 1000;
 }
 
 char pixelToAscii(int grayValue) {
-  int index = (grayValue * (strlen(ASCII_CHARS)-1)) / 255;\
-  return ASCII_CHARS[index];
+  if (grayValue < 0 ) grayValue = 0;
+  if (grayValue > 255 ) grayValue = 255;
+  return ASCII_LUT.data[grayValue];
 }
 
 RawImage convertToAscii(const RawImage &source_image) {
@@ -53,53 +74,11 @@ RawImage convertToRainbowAscii(const RawImage& img, int scroll_offset) { // Remo
   int height = img.getHeight();
   uint8_t* data = img.getData();
   
-  // Estimate size: 20 bytes per pixel (ANSI + char) + newline per row + footer + null
+  // Estimate size: max 19 bytes per pixel (\033[38;2;255;255;255mC) + newline + footer + null
   size_t estimated_size = height * (width * 20 + 1) + 16;
   RawImage target(estimated_size, 1, 1);
-
-  std::stringstream buffer;
-
-  for (int y = 0; y < height; ++y) {
-    for (int x = 0; x < width; ++x) {
-      size_t pixelIndex = (y * width + x) * 3;  // RGB data assumes 3 channels
-      uint8_t red = data[pixelIndex];
-      uint8_t green = data[pixelIndex + 1];
-      uint8_t blue = data[pixelIndex + 2];
-      
-      int grayValue = getGrayscaleValue(red, green, blue);
-      char asciiChar = pixelToAscii(grayValue);
-
-      getRainbowColor(x, y, scroll_offset, red, green, blue);
-
-      buffer << "\033[38;2;" 
-            << (int)red << ";" << (int)green << ";" << (int)blue << "m" 
-            << asciiChar; 
-    }
-  
-    buffer << std::endl; // New line after each row
-  }
-  // Reset color at end
-  buffer << "\033[0m";
-
-  std::string str = buffer.str();
-  size_t len = str.length();
-  if (len >= target.getSize()) len = target.getSize() - 1;
-  std::memcpy(target.getData(), str.c_str(), len);
-  target.getData()[len] = '\0';
-
-  return target;
-}
-
-RawImage convertToColoredAscii(const RawImage &source_image) {
-  int width = source_image.getWidth();
-  int height = source_image.getHeight();
-  uint8_t* data = source_image.getData();
-  
-  // Estimate size: 20 bytes per pixel (ANSI + char) + newline per row + footer + null
-  size_t estimated_size = height * (width * 20 + 1) + 16;
-  RawImage target(estimated_size, 1, 1);
-
-  std::stringstream buffer;
+  char* buffer = reinterpret_cast<char*>(target.getData());
+  char* p = buffer;
 
   for (int y = 0; y < height; ++y) {
     for (int x = 0; x < width; ++x) {
@@ -111,21 +90,47 @@ RawImage convertToColoredAscii(const RawImage &source_image) {
       int grayValue = getGrayscaleValue(r, g, b);
       char asciiChar = pixelToAscii(grayValue);
 
-      buffer << "\033[38;2;" 
-            << (int)r << ";" << (int)g << ";" << (int)b << "m" 
-            << asciiChar; 
-    }
-  
-    buffer << std::endl; // New line after each row
+      getRainbowColor(x, y, scroll_offset, r, g, b);
+
+      // Using sprintf is much faster than stringstream or std::string concatenation
+      p += sprintf(p, "\033[38;2;%d;%d;%dm%c", r, g, b, asciiChar);
+    }  
+    *p++ = '\n';
   }
   // Reset color at end
-  buffer << "\033[0m";
+  sprintf(p, "\033[0m");
 
-  std::string str = buffer.str();
-  size_t len = str.length();
-  if (len >= target.getSize()) len = target.getSize() - 1;
-  std::memcpy(target.getData(), str.c_str(), len);
-  target.getData()[len] = '\0';
+  return target;
+}
+
+RawImage convertToColoredAscii(const RawImage &source_image) {
+  int width = source_image.getWidth();
+  int height = source_image.getHeight();
+  uint8_t* data = source_image.getData();
+  
+  // Estimate size: max 19 bytes per pixel (\033[38;2;255;255;255mC) + newline + footer + null
+  size_t estimated_size = height * (width * 20 + 1) + 16;
+  RawImage target(estimated_size, 1, 1);
+  char* buffer = reinterpret_cast<char*>(target.getData());
+  char* p = buffer;
+
+  for (int y = 0; y < height; ++y) {
+    for (int x = 0; x < width; ++x) {
+      size_t pixelIndex = (y * width + x) * 3;  // RGB data assumes 3 channels
+      uint8_t r = data[pixelIndex];
+      uint8_t g = data[pixelIndex + 1];
+      uint8_t b = data[pixelIndex + 2];
+      
+      int grayValue = getGrayscaleValue(r, g, b);
+      char asciiChar = pixelToAscii(grayValue);
+
+      p += sprintf(p, "\033[38;2;%d;%d;%dm%c", r, g, b, asciiChar);
+    }
+  
+    *p++ = '\n';
+  }
+  // Reset color at end
+  sprintf(p, "\033[0m");
 
   return target;
 }
@@ -188,6 +193,37 @@ void outputWebcameAsciiStream(size_t FRAMES_TO_PROCESS) {
     current_fps = static_cast<int>(1000 / elapsed.count());
     std::string fps_str = std::to_string(current_fps);
     
+    std::cout << "Frame Rate: " <<  fps_str << std::endl;
+    avg_fps += current_fps;
+  }
+  
+  avg_fps /= FRAMES_TO_PROCESS;
+  
+  std::string avg_fps_str = std::to_string(avg_fps);
+  std::cout << "Avg. Frame Rate: " <<  avg_fps_str << std::endl;
+}
+
+
+void outputRainbowAsciiAnimation(const RawImage& img, size_t FRAMES_TO_PROCESS) {
+  // // Disable synchronization with C-style I/O for faster terminal output
+  // std::ios::sync_with_stdio(false);
+  // std::cin.tie(NULL);
+  
+  // calculating average frame rate
+  unsigned int current_fps = 0, avg_fps = 0; 
+  
+  for (int i = 0; i < FRAMES_TO_PROCESS; i++){
+    auto start = std::chrono::high_resolution_clock::now();
+
+    std::cout << "\033[H\033[J";  // ANSI escape code to clear screen
+    std::cout << "\033[H" << convertToRainbowAscii(img, i).getData() << std::flush;
+
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double, std::milli> elapsed = end - start;
+
+    current_fps = static_cast<int>(1000 / elapsed.count());
+    std::string fps_str = std::to_string(current_fps);
+
     std::cout << "Frame Rate: " <<  fps_str << std::endl;
     avg_fps += current_fps;
   }

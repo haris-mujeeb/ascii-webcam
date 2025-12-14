@@ -20,13 +20,16 @@ RawImage convertToAscii(const RawImage &source_image) ;
 void getRainbowColor(int width, int height, int scroll_offset, 
                     uint8_t& red, uint8_t& green, uint8_t& blue) ;
 
-RawImage convertToRainbowAscii(const RawImage& img, int scroll_offset = 0) ;
+RawImage convertToRainbowAscii(const RawImage& img, int scroll_offset) ;
 
 
 RawImage convertToColoredAscii(const RawImage &source_image) ;
 
 
 void outputAsciiToFile(const RawImage &img, const char* output_filename) ;
+
+
+void outputRainbowAsciiAnimation(const RawImage& img, size_t FRAMES_TO_PROCESS);
 
 
 void outputWebcameAsciiStream(size_t FRAMES_TO_PROCESS);

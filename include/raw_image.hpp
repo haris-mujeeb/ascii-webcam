@@ -18,8 +18,8 @@ public:
   RawImage(const char* filename);
   ~RawImage();
   
-  RawImage(const RawImage &other);
-  RawImage& operator= (const RawImage &other);
+  RawImage(const RawImage &other); // Copy constructor
+  RawImage& operator= (const RawImage &other); // Copy assignement
   size_t getSize() const { return m_size; }
   int getWidth() const { return m_width; }
   int getHeight() const { return m_height;}

@@ -133,14 +133,15 @@ TEST_F(AsciiImageTests, OuputColoredAsciiToTerminal) {
 
 TEST_F(AsciiImageTests, OuputTerminalRainbowAscii) {
   RawImage raw_img(TOSTRING(IMAGE_FILE_PATH));
-  RawImage rainbow_img = convertToRainbowAscii(raw_img);
+  RawImage rainbow_img = convertToRainbowAscii(raw_img, 0);
   EXPECT_NO_THROW(std::cout << rainbow_img.getData());
 }
 
-// TEST_F(AsciiImageTests, WebcamLiveStream) {
-//   size_t FRAMES_TO_PROCESS = 100;
-//   outputWebcameAsciiStream(FRAMES_TO_PROCESS);
-// }
+TEST_F(AsciiImageTests, AnimationStressTest) {
+  size_t FRAMES_TO_PROCESS = 1000;  
+  RawImage raw_img(TOSTRING(IMAGE_FILE_PATH));
+  EXPECT_NO_THROW(outputRainbowAsciiAnimation(static_cast<const RawImage&>(raw_img), FRAMES_TO_PROCESS));
+}
 
 TEST_F(AsciiImageTests, WebcamDataVerification) {
   cv::VideoCapture cap(0);
